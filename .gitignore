@@ -1,0 +1,5 @@
+bin/*
+build/*
+iso_root/*
+limine-binary/*
+obj/*
