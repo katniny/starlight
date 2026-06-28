@@ -91,6 +91,49 @@ static void hcf(void) {
     }
 }
 
+// framebuffer drawing
+static void putpixel(struct limine_framebuffer *fb_info, int x, int y, uint32_t color) {
+    uint32_t *fb = fb_info->address;
+    uint64_t pitch = fb_info->pitch / 4;
+
+    fb[y * pitch + x] = color;
+}
+
+// 8x8 font
+static const uint8_t font8x8[128][10] = {
+    ['H'] = {0x42,0x42,0x7E,0x42,0x42,0x42,0x42,0x00},
+    ['E'] = {0x7E,0x40,0x7C,0x40,0x40,0x40,0x7E,0x00},
+    ['L'] = {0x40,0x40,0x40,0x40,0x40,0x40,0x7E,0x00},
+    ['O'] = {0x3C,0x42,0x42,0x42,0x42,0x42,0x3C,0x00},
+    ['A'] = {0x18,0x24,0x42,0x7E,0x42,0x42,0x42,0x00},
+    ['T'] = {0x7E,0x10,0x10,0x10,0x10,0x10,0x10,0x00},
+    ['S'] = {0x3C,0x42,0x30,0x0C,0x42,0x42,0x3C,0x00},
+    ['R'] = {0x7C,0x42,0x42,0x7C,0x48,0x44,0x42,0x00},
+    ['I'] = {0x7E,0x18,0x18,0x18,0x18,0x18,0x7E,0x00},
+    ['G'] = {0x3C,0x42,0x40,0x4E,0x42,0x42,0x3C,0x00},
+};
+
+static void draw_char(struct limine_framebuffer *fb_info, int x, int y, char c, uint32_t color) {
+    for (int row = 0; row < 8; row++) {
+        uint8_t bits = font8x8[(uint8_t)c][row];
+
+        for (int col = 0; col < 8; col++) {
+            if (bits & (0x80 >> col)) {
+                putpixel(fb_info, x + col, y + row, color);
+            }
+        }
+    }
+}
+
+static void draw_string(struct limine_framebuffer *fb_info, int x, int y, const char *str, uint32_t color) {
+    int cx = x;
+
+    for (int i = 0; str[i]; i++) {
+        draw_char(fb_info, cx, y, str[i], color);
+        cx += 8;
+    }
+}
+
 // the following will be our kernel's entry point.
 void starmain(void) {
     // ensure the bootloader actually understands our base revision
@@ -106,16 +149,7 @@ void starmain(void) {
     // fetch the first framebuffer
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 
-    // print a nice pattern to screen as an example
-    // note: we assume the framebuffer model is RGB with 32-bit pixels.
-    volatile uint32_t *fb_ptr = framebuffer->address;
-    for (size_t y = 0; y < framebuffer->height; y++) {
-        for (size_t x = 0; x < framebuffer->width; x++) {
-            uint32_t nX = x * 255 / framebuffer->width;
-            uint32_t nY = y * 255 / framebuffer->height;
-            fb_ptr[y * (framebuffer->pitch / 4) + x] = (nY << 8) | nX;
-        }
-    }
+    draw_string(framebuffer, 50, 50, "HELLO STARLIGHT", 0xFFFFFFFF);
 
     // we're done, just hang...
     hcf();

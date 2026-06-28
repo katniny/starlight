@@ -11,6 +11,7 @@ This is a learning project, and not built for daily use.
 
 Building is pretty easy. You'll want a couple dependencies.
 - macOS: `brew install xorriso qemu` (You will need [brew](https://brew.sh/) installed)
+    - brew technically supports Linux as well, though I'm unsure if these 2 packages in specific will work.
 - Debian/Ubuntu: `apt install xorriso qemu-system qemu-utils`
 - Arch Linux: `pacman -S qemu`
 
